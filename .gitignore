@@ -1,6 +1,9 @@
+# Virtual envs
 env
 .env
 .venv
+
+# Images
 *.png
 *.jpg
 *.jpeg
