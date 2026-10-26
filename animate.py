@@ -14,6 +14,12 @@ In MMM language:
 Part 1 uses a closed-form Normal-Normal conjugate update (same math as
 the interactive animation). Part 2 sketches a real Bayesian MMM in PyMC.
 
+Colors follow the Artefact brand palette:
+    Artefact Blue  #002244  -- prior belief
+    Artefact Pink  #FF0066  -- posterior (the updated belief)
+    Electric Blue  #052BF6  -- true ROI reference line
+    Medium Blue    #273275  -- axes / gridlines
+
 Run:  pip install numpy matplotlib   (Part 1)
       pip install pymc               (Part 2, optional)
 """
@@ -22,6 +28,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from scipy import stats
+
+# ----------------------------------------------------------------------
+# Artefact brand palette
+# ----------------------------------------------------------------------
+ARTEFACT_BLUE   = "#002244"   # primary text, headings, prior
+ARTEFACT_PINK   = "#FF0066"   # primary accent -- posterior
+DEEP_INDIGO     = "#172469"   # gradient start
+DARK_NAVY       = "#0D1634"   # gradient end
+MEDIUM_BLUE     = "#273275"   # secondary background / gridlines
+PURPLE          = "#752E7D"   # accent shapes
+ELECTRIC_BLUE   = "#052BF6"   # separator gradient endpoint -- true ROI line
+DECORATIVE_BLUE = "#0E51FF"   # decorative gradient start
+VIVID_PURPLE    = "#9900FF"   # occasional accent
+CONF_RED        = "#E06666"   # confidential / warning text
+WHITE           = "#FFFFFF"
 
 # ----------------------------------------------------------------------
 # Part 1: Conjugate Bayesian update, animated week by week
@@ -61,18 +82,28 @@ def posterior_params(obs: np.ndarray):
 # --- Animation: watch the posterior sharpen as weeks arrive ----------
 x = np.linspace(0, 5, 400)
 fig, ax = plt.subplots(figsize=(9, 5))
+fig.patch.set_facecolor(WHITE)
+ax.set_facecolor(WHITE)
 
 prior_pdf = stats.norm.pdf(x, prior_mean, sigma / np.sqrt(prior_n))
-ax.plot(x, prior_pdf, "--", color="gray", label="Prior")
-post_line, = ax.plot([], [], color="#7F77DD", lw=2, label="Posterior")
+ax.plot(x, prior_pdf, "--", color=ARTEFACT_BLUE, label="Prior")
+post_line, = ax.plot([], [], color=ARTEFACT_PINK, lw=2, label="Posterior")
 post_fill = None
-title = ax.set_title("")
-ax.axvline(true_roi, color="#1D9E75", ls=":", label=f"True ROI = {true_roi}x")
-ax.set_xlabel("Return on ad spend (ROI)")
-ax.set_ylabel("Density")
+title = ax.set_title("", color=ARTEFACT_BLUE)
+ax.axvline(true_roi, color=ELECTRIC_BLUE, ls=":", label=f"True ROI = {true_roi}x")
+ax.set_xlabel("Return on ad spend (ROI)", color=ARTEFACT_BLUE)
+ax.set_ylabel("Density", color=ARTEFACT_BLUE)
 ax.set_xlim(0, 5)
 ax.set_ylim(0, 3.2)
-ax.legend(loc="upper left")
+ax.tick_params(colors=ARTEFACT_BLUE)
+ax.spines["bottom"].set_color(MEDIUM_BLUE)
+ax.spines["left"].set_color(MEDIUM_BLUE)
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+ax.grid(True, color=MEDIUM_BLUE, alpha=0.15)
+legend = ax.legend(loc="upper left", facecolor=WHITE, edgecolor=MEDIUM_BLUE)
+for text in legend.get_texts():
+    text.set_color(ARTEFACT_BLUE)
 
 
 def update(frame):
@@ -83,7 +114,7 @@ def update(frame):
     post_line.set_data(x, pdf)
     if post_fill is not None:
         post_fill.remove()
-    post_fill = ax.fill_between(x, pdf, alpha=0.15, color="#7F77DD")
+    post_fill = ax.fill_between(x, pdf, alpha=0.15, color=ARTEFACT_PINK)
     title.set_text(
         f"Week {frame}: posterior ROI = {mu:.2f}x  "
         f"(±{1.96*sd:.2f}),  weight on data = {w:.0%}"
@@ -95,7 +126,7 @@ anim = FuncAnimation(fig, update, frames=range(0, n_weeks + 1),
                      interval=250, repeat=False)
 # plt.tight_layout()
 # plt.show()
-#To save instead:  
+#To save instead:
 anim.save("bayes_mmm.gif", writer="pillow", fps=4)
 
 
